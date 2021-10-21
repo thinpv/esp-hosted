@@ -21,6 +21,7 @@ deploy_master_github:
   when: manual
   only:
     - master
+    - fix/ci_sync_with_github
   script:
       - mkdir -p ~/.ssh
       - chmod 700 ~/.ssh
@@ -30,7 +31,8 @@ deploy_master_github:
       - echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
       - git remote remove github &>/dev/null || true
       - git remote add github git@github.com:espressif/esp-hosted.git
-      - git push github "${CI_COMMIT_SHA}:refs/heads/${CI_COMMIT_REF_NAME}"
+      #- git push github "${CI_COMMIT_SHA}:refs/heads/${CI_COMMIT_REF_NAME}"
+      - git push github "${CI_COMMIT_SHA}:refs/heads/test"
 
 sync_with_github:
   stage: deploy
@@ -40,8 +42,9 @@ sync_with_github:
   when: manual
   only:
     - master
-  variables:
-    GITHUB_BRANCH_NAME: "master"
+    - fix/ci_sync_with_github
+  #variables:
+    #COMMITID: $INPUT_COMMIT_ID
   script:
       # add ssh key
       - mkdir -p ~/.ssh
@@ -54,7 +57,34 @@ sync_with_github:
       - git remote remove github &>/dev/null || true
       - git remote add github git@github.com:espressif/esp-hosted.git
       # sync with github
-      - git config user.email "test-user@example.com"
-      - git config user.name "Test User"
-      - git pull github ${GITHUB_BRANCH_NAME} --rebase
-      - git push github "${CI_COMMIT_SHA}:refs/heads/${CI_COMMIT_REF_NAME}"
+      - git status
+      - git log -4
+      - git config user.name "Mangesh Malusare"
+      - git config user.email "mangesh.malusare@espressif.com"
+      # checkout at required commit
+      # - git reset $COMMITID
+      - git reset 10bad030b89dac2617d379b9aa19129918b788bd
+      - git status
+      - git log -4
+      # stash changes
+      - git stash
+      - git status
+      # rebase
+      #- git pull github master --rebase
+      #- git status
+      #- git log -4
+      # unset config user name and user email
+      - git config --unset user.name
+      - git config --unset user.email
+      - cat .git/config
+      - git status
+      - git log -4
+      # get git HEAD
+      - git rev-parse HEAD
+      - HEAD=`git rev-parse HEAD`
+      - echo "HEAD is at $HEAD"
+      - ls -a
+      # push to github
+      - git push -f github "$HEAD:refs/heads/test"
+      #- git push -f github "$HEAD:refs/heads/master"
+      # - git push -f github "${CI_COMMIT_SHA}:refs/heads/${CI_COMMIT_REF_NAME}"
