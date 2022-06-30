@@ -79,6 +79,8 @@ static const char TAG_TX_S[] = "CONTROL S -> H";
 
 #define ETH_DATA_LEN                     1500
 
+extern void usb_uart_task(void* pvParameters);
+
 volatile uint8_t action = 0;
 volatile uint8_t datapath = 0;
 volatile uint8_t station_connected = 0;
@@ -687,6 +689,7 @@ void app_main()
 #endif
 	print_firmware_version();
 
+	assert(xTaskCreate(usb_uart_task, "usb_uart_task", 2048, NULL, 2, NULL) == pdTRUE);
 	capa = get_capabilities();
 
 	/* Initialize NVS */

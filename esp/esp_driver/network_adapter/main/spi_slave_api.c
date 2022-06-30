@@ -75,10 +75,14 @@ static const char TAG[] = "SPI_DRIVER";
 #elif defined CONFIG_IDF_TARGET_ESP32S2
 
     #define ESP_SPI_CONTROLLER     1
-    #define GPIO_MOSI              11
-    #define GPIO_MISO              13
-    #define GPIO_SCLK              12
-    #define GPIO_CS                10
+    // #define GPIO_MOSI              11
+    // #define GPIO_MISO              13
+    // #define GPIO_SCLK              12
+    // #define GPIO_CS                10
+    #define GPIO_MOSI              9
+    #define GPIO_MISO              5
+    #define GPIO_SCLK              7
+    #define GPIO_CS                11
     #define DMA_CHAN               ESP_SPI_CONTROLLER
 
 #elif defined CONFIG_IDF_TARGET_ESP32C3
