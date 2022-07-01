@@ -170,8 +170,8 @@ void usb_uart_task(void *pvParameters)
 			.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
 			.source_clk = UART_SCLK_APB,
 	};
-	
-	ESP_ERROR_CHECK(uart_driver_install(ECHO_UART_PORT_NUM, BUF_SIZE * 2, 0, 0, NULL, /* ESP_INTR_FLAG_IRAM */0));
+
+	ESP_ERROR_CHECK(uart_driver_install(ECHO_UART_PORT_NUM, BUF_SIZE * 2, 0, 0, NULL, /* ESP_INTR_FLAG_IRAM */ 0));
 	ESP_ERROR_CHECK(uart_param_config(ECHO_UART_PORT_NUM, &uart_config));
 	ESP_ERROR_CHECK(uart_set_pin(ECHO_UART_PORT_NUM, ECHO_TEST_TXD, ECHO_TEST_RXD, ECHO_TEST_RTS, ECHO_TEST_CTS));
 
@@ -182,7 +182,7 @@ void usb_uart_task(void *pvParameters)
 	tinyusb_config_cdcacm_t amc_cfg = {
 			.usb_dev = TINYUSB_USBDEV_0,
 			.cdc_port = TINYUSB_CDC_ACM_0,
-			.rx_unread_buf_sz = 64,
+			.rx_unread_buf_sz = 512,
 			.callback_rx = &tinyusb_cdc_rx_callback, // the first way to register a callback
 			.callback_rx_wanted_char = NULL,
 			.callback_line_state_changed = &tinyusb_cdc_line_state_changed_callback,
@@ -190,16 +190,18 @@ void usb_uart_task(void *pvParameters)
 
 	ESP_ERROR_CHECK(tusb_cdc_acm_init(&amc_cfg));
 	ESP_LOGI(TAG, "USB initialization DONE");
+	ESP_LOGI(TAG, "BULK_PACKET_SIZE: %d", (TUD_OPT_HIGH_SPEED ? 512 : 64));
 
-	uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+	uint8_t *data = (uint8_t *)malloc((TUD_OPT_HIGH_SPEED ? 512 : 64));
 	while (1)
 	{
-		int len = uart_read_bytes(ECHO_UART_PORT_NUM, data, BUF_SIZE, 1 / portTICK_RATE_MS);
+		int len = uart_read_bytes(ECHO_UART_PORT_NUM, data, (TUD_OPT_HIGH_SPEED ? 512 : 64), 1 / portTICK_RATE_MS);
 		if (len)
 		{
 			// ESP_LOGI(TAG, "len: %d", len);
 			tinyusb_cdcacm_write_queue(0, data, len);
-			tinyusb_cdcacm_write_flush(0, 0);
+			if (len != (TUD_OPT_HIGH_SPEED ? 512 : 64))
+				tinyusb_cdcacm_write_flush(0, 0);
 		}
 	}
 }
